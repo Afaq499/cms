@@ -3,6 +3,7 @@ const router = express.Router();
 const Progress = require("../models/Progress");
 const Assignment = require("../models/Assignment");
 const User = require("../models/User");
+const Quiz = require("../models/Quiz");
 
 // Generate comprehensive student report
 router.get("/student/:studentId", async (req, res) => {
@@ -128,6 +129,30 @@ router.get("/all-students", async (req, res) => {
     });
 
     res.json(studentsSummary);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Get dashboard statistics for teacher
+router.get("/dashboard-stats", async (req, res) => {
+  try {
+    // Get total students count
+    const totalStudents = await User.countDocuments({ role: "Student" });
+
+    // Get quizzes scheduled count (status: "Scheduled")
+    const quizzesScheduled = await Quiz.countDocuments({ status: "Scheduled" });
+
+    // Get assignments pending count (status: "Pending" or "Not Started")
+    const assignmentsPending = await Assignment.countDocuments({
+      status: { $in: ["Pending", "Not Started"] }
+    });
+
+    res.json({
+      totalStudents,
+      quizzesScheduled,
+      assignmentsPending,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
