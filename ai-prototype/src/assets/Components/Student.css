@@ -1,0 +1,239 @@
+/* Parent layout: sidebar + main */
+.studentLayout {
+    display: flex;
+    /* min-height: 15vh;s */
+    background: #f9f9f9;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 220px;
+  background: #2c3e50;
+  color: white;
+  padding: 20px;
+  padding-top: 30px; /* push below navbar */
+  position: fixed;   /* fixed left */
+  top: 55px;
+  bottom: 0;
+  left: 0;
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 20px;
+  margin: 0;
+}
+
+.sidebar li {
+  padding: 10px 0;
+  cursor: pointer;
+}
+
+.sidebar li:hover {
+  background: #34495e;
+  padding-left: 5px;
+}
+
+.sidebar a {
+  color: white;
+  text-decoration: none;
+  display: block;
+}
+
+/* Default link */
+.sidebar a {
+  color: white;
+  text-decoration: none;
+  display: block;
+  padding: 10px;
+  border-radius: 4px;
+  transition: background 0.3s, color 0.3s;
+}
+
+/* Hover */
+.sidebar a:hover {
+  background: #34495e;
+  padding-left: 5px;
+}
+
+/* Active link (NavLink se auto apply hota hai) */
+.sidebar a.active {
+  background: #ecf0f1;  /* grey background */
+  color: #2c3e50;       /* dark text */
+  font-weight: 600;
+}
+
+
+/* Main content */
+.studentmain {
+  margin-left: 220px;  /* leave space for sidebar */
+  padding: 80px 30px 30px; /* push below navbar + padding */
+  flex: 1;
+}
+
+/* Two column layout */
+.two-cols {
+  display: flex;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.col-box {
+  flex: 1;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+/* Header box */
+.stud-Header {
+  background: #0073e6; /* professional blue */
+  color: white;
+  padding: 5px 20px;
+  border-radius: 8px 8px 0 0;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.stud-Header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.stud-Header p {
+  margin: 5px 0;
+  font-size: 14px;
+}
+
+/* Profile section */
+.stud-profile {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background: #f1f4f9;
+  padding: 25px;
+  border-radius: 8px;
+  margin-top: 15px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.stud-profile img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.stud-profile h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.stud-profile p {
+  margin: 3px 0;
+  font-size: 13px;
+  color: #555;
+}
+
+/* Divider line */
+hr {
+  border: none;
+  height: 1px;
+  background: #ccc;
+  margin: 20px 0;
+}
+
+/* Image icon section */
+.stud-image {
+  display: flex;
+  justify-content: space-between; /* equal spacing */
+  align-items: center;
+  padding: 10px;
+  gap: 15px;
+  flex-wrap: wrap; /* responsive wrap on smaller screens */
+}
+
+.stud-image img {
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+  transition: transform 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+.stud-image img:hover {
+  transform: scale(1.1);
+}
+
+/* Image links */
+.stud-image a {
+  display: inline-block;
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  border-radius: 8px;
+  padding: 5px;
+}
+
+.stud-image a:hover {
+  transform: scale(1.1);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+  background: #f4f7fb;
+}
+
+.stud-image img {
+  width: 45px;   /* compact size */
+  height: 45px;
+  object-fit: contain;
+  cursor: pointer;
+}
+
+/* Extra small icon button */
+.stud-image button {
+  width: 30px;              /* smaller button */
+  height: 30px;
+  background: #ffffff;
+  border: none;
+  border-radius: 50%;       /* keep circular */
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.stud-image button:hover {
+  transform: scale(1.1);
+  background: #f4f7fb;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.12);
+}
+
+.stud-image button img {
+  width: 15px;   /* smaller icon */
+  height: 15px;
+  object-fit: contain;
+}
+
+/* Force small button */
+.watched-btn {
+  width: 55px !important;   /* force size */
+  height: 55px !important;
+  background: #ffffff;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 !important;
+  line-height: 0;           /* remove extra spacing */
+}
+
+.watched-btn img {
+  width: 45px !important;   /* force smaller icon */
+  height: 45px !important;
+  object-fit: contain;
+}
+
+

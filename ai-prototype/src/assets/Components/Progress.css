@@ -1,0 +1,91 @@
+.progressPage {
+    margin-left: 220px; /* leave space for sidebar */
+    padding: 80px 20px;
+    padding-bottom: 80px; /* extra space so content won't hide under footer */
+    background: #f9f9f9;
+    min-height: calc(100vh - 60px); /* adjust based on your navbar/footer height */
+    box-sizing: border-box;
+  }
+  
+  .progressHeader {
+    margin-bottom: 20px;
+  }
+  
+  .progressHeader h2 {
+    font-size: 24px;
+    color: #2c3e50;
+    margin-bottom: 5px;
+  }
+  
+  .progressHeader p {
+    font-size: 14px;
+    color: #555;
+  }
+  
+  .sectionTitle {
+    margin: 15px 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #0073e6;
+  }
+  
+  .progressTableSection {
+    margin-top: 10px;
+    background: white;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+    overflow-x: auto;
+  }
+  
+  .progressTable {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .progressTable th,
+  .progressTable td {
+    padding: 12px;
+    text-align: center;
+    border: 1px solid #ddd;
+    font-size: 14px;
+  }
+  
+  .progressTable th {
+    background: #0073e6;
+    color: white;
+    font-weight: 600;
+  }
+  
+  .progressTable tr:nth-child(even) {
+    background: #f9f9f9;
+  }
+  
+.progressTable tr:hover {
+  background: #eef6ff;
+}
+
+/* Status styling */
+.status-completed {
+  background-color: #d4edda;
+  color: #155724;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.status-in-progress {
+  background-color: #fff3cd;
+  color: #856404;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.status-dropped {
+  background-color: #f8d7da;
+  color: #721c24;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+}

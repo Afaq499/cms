@@ -1,0 +1,95 @@
+.Signmain {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  background: #f4f4f4;
+  padding: 40px 20px;
+}
+
+.signForm {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  width: 100%;
+  max-width: 450px;
+  text-align: center;
+  margin: 40px auto;
+}
+
+.signForm .signmainHeading {
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+.signForm label {
+  display: block;
+  text-align: left;
+  margin-bottom: 6px;
+  font-weight: bold;
+}
+
+.signForm input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 16px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  outline: none;
+}
+
+.signForm input:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 4px rgba(0,123,255,0.4);
+}
+
+
+.signForm button {
+  width: 100%;
+  padding: 12px;
+  background: #007bff;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.3s;
+  margin: 2px;
+}
+
+.signForm button:hover {
+  background: #0056b3;
+}
+
+.signForm h3 {
+  margin: 10px 0;
+  font-size: 14px;
+}
+
+.signForm h3 a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.signForm h3 a:hover {
+  text-decoration: underline;
+}
+
+.signForm select {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 16px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  outline: none;
+  background: white;
+  font-size: 14px;
+  appearance: none; /* removes default arrow style */
+  cursor: pointer;
+}
+
+.signForm select:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 4px rgba(0,123,255,0.4);
+}

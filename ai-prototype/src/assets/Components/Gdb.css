@@ -1,0 +1,49 @@
+.gdbMain {
+  margin-left: 240px;  
+  padding: 80px 20px;
+  background: #f9f9f9; 
+  min-height: 100vh;   
+}
+
+.gdbMain h3 {
+  color: #2c3e50;
+  margin-bottom: 20px;
+  font-size: 20px;
+}
+
+.gdbSection table {
+  width: 95%;              
+  border-collapse: collapse;
+  background: #fff;
+  font-size: 14px;
+  margin: 0 auto;         
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.gdbSection thead tr {
+  background-color: #007bff; 
+  color: #fff;
+  font-weight: bold;
+}
+
+.gdbSection th,
+.gdbSection td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: left;
+}
+
+.gdbSection tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.gdbColor h3 {
+  background-color: #007bff; 
+  color: #fff;              
+  padding: 8px 12px;        
+  border-radius: 4px;       
+  margin-bottom: 15px;       
+  display: block;
+  width: 95%;              
+  margin: 0 auto 15px auto; 
+}

@@ -1,0 +1,52 @@
+/* Layout wrapper */
+.profileLayout {
+  display: flex;
+  min-height: 100vh;
+  background: #f5f7fa;
+}
+
+/* Main content area */
+.profileMain {
+  flex: 1;
+  margin-left: 340px;     /* same as sidebar width */
+  padding: 80px 30px 30px; /* push down for navbar (assume 60px height) */
+}
+
+/* Page title */
+.profileTitle {
+  font-size: 26px;
+  color: #2c3e50;
+  margin-bottom: 25px;
+}
+
+/* Card styling */
+.profileCard {
+  display: flex;
+  align-items: flex-start;
+  background: #fff;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+  max-width: 700px;
+}
+
+/* Profile image */
+.profileImg img {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 55px;
+  border: 3px solid #007bff;
+}
+
+/* Profile text data */
+.profileData p {
+  margin: 8px 0;
+  font-size: 16px;
+  color: #34495e;
+}
+
+.profileData strong {
+  color: #2c3e50;
+}
