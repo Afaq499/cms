@@ -58,6 +58,16 @@ const assignmentSchema = new mongoose.Schema(
       trim: true,
       default: "",
     },
+    studentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    teacherId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
   },
   { timestamps: true }
 );

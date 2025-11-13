@@ -108,14 +108,11 @@ router.get("/all-students", async (req, res) => {
       const totalCourses = studentProgress.length;
       const completedCourses = studentProgress.filter(p => p.status === "Completed").length;
       
-      // Calculate average progress percentage
-      let avgProgress = 0;
+      // Calculate progress as completion percentage
+      // Progress = (Completed Courses / Total Courses) * 100
+      let progressPercentage = 0;
       if (totalCourses > 0) {
-        const totalProgress = studentProgress.reduce((sum, p) => {
-          const courseProgress = (p.assignments * 0.3 + p.quizzes * 0.3 + p.midterm * 0.2 + p.final * 0.2);
-          return sum + courseProgress;
-        }, 0);
-        avgProgress = Math.round(totalProgress / totalCourses);
+        progressPercentage = Math.round((completedCourses / totalCourses) * 100);
       }
 
       return {
@@ -124,7 +121,7 @@ router.get("/all-students", async (req, res) => {
         email: student.email,
         totalCourses,
         completedCourses,
-        progress: avgProgress,
+        progress: progressPercentage,
       };
     });
 
