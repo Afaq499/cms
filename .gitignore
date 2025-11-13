@@ -3,11 +3,6 @@
 /ai-prototype/build
 /ai-prototype/public
 /ai-prototype/README.md
-/ai-prototype/vite.config.js
-/ai-prototype/tsconfig.json
-/ai-prototype/tsconfig.node.json
-/ai-prototype/tsconfig.app.json
-/ai-prototype/tsconfig.base.json
 
 /Ai-Prototype-Backend/node_modules
 /Ai-Prototype-Backend/dist
