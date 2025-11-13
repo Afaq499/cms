@@ -2,9 +2,6 @@
 /ai-prototype/dist
 /ai-prototype/build
 /ai-prototype/public
-/ai-prototype/src
-/ai-prototype/package-lock.json
-/ai-prototype/package.json
 /ai-prototype/README.md
 /ai-prototype/vite.config.js
 /ai-prototype/tsconfig.json
@@ -16,13 +13,5 @@
 /Ai-Prototype-Backend/dist
 /Ai-Prototype-Backend/build
 /Ai-Prototype-Backend/public
-/Ai-Prototype-Backend/src
-/Ai-Prototype-Backend/package-lock.json
-/Ai-Prototype-Backend/package.json
 /Ai-Prototype-Backend/README.md
-/Ai-Prototype-Backend/vite.config.js
-/Ai-Prototype-Backend/tsconfig.json
-/Ai-Prototype-Backend/tsconfig.node.json
-/Ai-Prototype-Backend/tsconfig.app.json
-
 .env
