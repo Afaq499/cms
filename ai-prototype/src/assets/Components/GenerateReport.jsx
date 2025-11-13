@@ -1,16 +1,39 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { API_URL } from "./constants";
 
 export function GenerateReport() {
   const [studentId, setStudentId] = useState("");
+  const [students, setStudents] = useState([]);
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [loadingStudents, setLoadingStudents] = useState(true);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchStudents();
+  }, []);
+
+  const fetchStudents = async () => {
+    try {
+      setLoadingStudents(true);
+      const response = await fetch(`${API_URL}/reports/all-students`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch students");
+      }
+      const data = await response.json();
+      setStudents(data);
+    } catch (err) {
+      setError(err.message);
+      console.error("Error fetching students:", err);
+    } finally {
+      setLoadingStudents(false);
+    }
+  };
 
   const handleGenerateReport = async (e) => {
     e.preventDefault();
-    if (!studentId.trim()) {
-      setError("Please enter a student ID");
+    if (!studentId) {
+      setError("Please select a student");
       return;
     }
 
@@ -35,13 +58,28 @@ export function GenerateReport() {
     <div className="form-container">
       <h2>Generate Student Report</h2>
       <form onSubmit={handleGenerateReport}>
-        <input
-          type="text"
-          placeholder="Enter Student ID"
+        <select
           value={studentId}
           onChange={(e) => setStudentId(e.target.value)}
-        />
-        <button type="submit" disabled={loading}>
+          disabled={loadingStudents}
+          required
+          style={{
+            width: "100%",
+            padding: "10px",
+            marginBottom: "10px",
+            fontSize: "16px",
+            border: "1px solid #ddd",
+            borderRadius: "4px",
+          }}
+        >
+          <option value="">Select a student...</option>
+          {students.map((student) => (
+            <option key={student.id} value={student.id}>
+              {student.name} ({student.email})
+            </option>
+          ))}
+        </select>
+        <button type="submit" disabled={loading || loadingStudents}>
           {loading ? "Generating..." : "Generate Report"}
         </button>
       </form>

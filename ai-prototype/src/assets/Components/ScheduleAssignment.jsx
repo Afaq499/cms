@@ -47,11 +47,17 @@ export function ScheduleAssignment() {
     setSuccess(null);
 
     try {
+      const user = JSON.parse(localStorage.getItem("user"));
+      if (!user || !user._id) {
+        throw new Error("User not logged in");
+      }
+
       // Combine date and time if needed, or just use date
       const assignmentData = {
         ...formData,
         dueDate: new Date(formData.dueDate).toISOString(),
         totalMarks: parseInt(formData.totalMarks),
+        teacherId: user._id,
       };
 
       const response = await fetch(`${API_URL}/assignments`, {
@@ -171,6 +177,7 @@ export function ScheduleAssignment() {
                 <th style={{ border: "1px solid #ddd", padding: "8px" }}>Course</th>
                 <th style={{ border: "1px solid #ddd", padding: "8px" }}>Due Date</th>
                 <th style={{ border: "1px solid #ddd", padding: "8px" }}>Marks</th>
+                <th style={{ border: "1px solid #ddd", padding: "8px" }}>Teacher</th>
                 <th style={{ border: "1px solid #ddd", padding: "8px" }}>Status</th>
               </tr>
             </thead>
@@ -184,6 +191,9 @@ export function ScheduleAssignment() {
                     {new Date(assignment.dueDate).toLocaleDateString()}
                   </td>
                   <td style={{ border: "1px solid #ddd", padding: "8px" }}>{assignment.totalMarks}</td>
+                  <td style={{ border: "1px solid #ddd", padding: "8px" }}>
+                    {assignment.teacherId?.name || "N/A"}
+                  </td>
                   <td style={{ border: "1px solid #ddd", padding: "8px" }}>{assignment.status}</td>
                 </tr>
               ))}
