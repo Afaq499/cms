@@ -49,6 +49,8 @@ app.use("/api/quizzes", require("./routes/quizRoutes"));
 app.use("/api/gdbs", require("./routes/gdbRoutes"));
 app.use("/api/videos", require("./routes/lectureVideoRoutes"));
 app.use("/api/reports", require("./routes/reportRoutes"));
+app.use("/api/admin", require("./routes/adminRoutes"));
+app.use("/api/degrees", require("./routes/degreeRoutes"));
 
 
 const PORT = process.env.PORT || 5003;

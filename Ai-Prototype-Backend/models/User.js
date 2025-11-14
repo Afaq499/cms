@@ -23,6 +23,42 @@ const userSchema = new mongoose.Schema({
     enum: ["Student", "Teacher", "Admin"],
     default: "Student",
   },
+  // Student specific fields
+  degree: {
+    type: String,
+    trim: true,
+  },
+  studentId: {
+    type: String,
+    trim: true,
+    unique: true,
+    sparse: true, // Allows multiple null values
+  },
+  address: {
+    type: String,
+    trim: true,
+  },
+  contact: {
+    type: String,
+    trim: true,
+  },
+  gender: {
+    type: String,
+    enum: ["Male", "Female", "Other"],
+  },
+  batch: {
+    type: String,
+    trim: true,
+  },
+  // Teacher specific fields
+  subject: {
+    type: String,
+    trim: true,
+  },
+  courses: {
+    type: [String], // Array of course codes
+    default: [],
+  },
   createdAt: {
     type: Date,
     default: Date.now,

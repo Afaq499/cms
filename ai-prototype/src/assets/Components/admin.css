@@ -152,13 +152,15 @@ td.group:not(:empty) {
   border-radius: 8px;
 }
 
-.form-container input {
+.form-container input,
+.form-container select {
   display: block;
   width: 100%;
   padding: 10px;
   margin: 8px 0;
   border: 1px solid #ccc;
   border-radius: 4px;
+  box-sizing: border-box;
 }
 
 .form-container button {
