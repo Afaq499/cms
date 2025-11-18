@@ -55,6 +55,37 @@ const quizSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    questions: [
+      {
+        questionId: {
+          type: String,
+          required: true,
+        },
+        question: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+        type: {
+          type: String,
+          enum: ["multiple-choice", "true-false", "short-answer", "essay"],
+          required: true,
+        },
+        options: {
+          type: [String],
+          default: [],
+        },
+        correctAnswer: {
+          type: mongoose.Schema.Types.Mixed, // Can be string, number, boolean, or array
+          required: true,
+        },
+        marks: {
+          type: Number,
+          required: true,
+          default: 1,
+        },
+      },
+    ],
   },
   { timestamps: true }
 );

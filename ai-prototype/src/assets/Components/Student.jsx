@@ -193,7 +193,7 @@ export function Student() {
                         </span>
                       )}
                     </a>
-                    <a href="/quiz" title={`${course.counts.quizzes} Quiz(zes)`} style={{ position: "relative", display: "inline-block" }}>
+                    <a href={`/quiz?course=${encodeURIComponent(course.courseCode)}`} title={`${course.counts.quizzes} Quiz(zes)`} style={{ position: "relative", display: "inline-block" }}>
                       <img src="/images/quiz.png" alt="Quiz" width={60} height={60} />
                       {course.counts.quizzes > 0 && (
                         <span style={{
