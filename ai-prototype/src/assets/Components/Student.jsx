@@ -216,7 +216,7 @@ export function Student() {
                         </span>
                       )}
                     </a>
-                    <Link to="./watched" title={`${course.counts.videos} Video(s)`} style={{ position: "relative", display: "inline-block" }}>
+                    <Link to={`./watched?course=${encodeURIComponent(course.courseCode)}`} title={`${course.counts.videos} Video(s)`} style={{ position: "relative", display: "inline-block" }}>
                       <img src="/images/video.png" alt="Video" width={60} height={60} />
                       {course.counts.videos > 0 && (
                         <span style={{
