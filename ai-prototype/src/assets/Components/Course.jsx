@@ -8,8 +8,19 @@ export function Course() {
   const [courses, setCourses] = useState([]);
 
   useEffect(() => {
-    axios.get(`${API_URL}/courses`)
-      .then(res => setCourses(res.data))
+    axios.get(`${API_URL}/degrees`)
+      .then(res => {
+        // Extract all courses from all degrees
+        const allCourses = [];
+        if (res.data.degrees && Array.isArray(res.data.degrees)) {
+          res.data.degrees.forEach(degree => {
+            if (degree.courses && Array.isArray(degree.courses)) {
+              allCourses.push(...degree.courses);
+            }
+          });
+        }
+        setCourses(allCourses);
+      })
       .catch(err => console.error(err));
   }, []);
 

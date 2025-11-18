@@ -82,9 +82,6 @@ export function Login() {
             </h3>
 
             <button type="submit">Login</button>
-            <Link to="/signup">
-              <button type="button">Sign Up</button>
-            </Link>
           </form>
         </div>
       </div>

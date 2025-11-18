@@ -17,10 +17,49 @@ export function Teacher() {
      assignmentsPending: 0,
    });
    const [loading, setLoading] = useState(true);
+   const [courses, setCourses] = useState([]);
 
    useEffect(() => {
      fetchDashboardStats();
+     fetchCourses();
    }, []);
+
+   const fetchCourses = async () => {
+     try {
+       // Try fetching from courses endpoint first
+       const response = await fetch(`${API_URL}/courses`);
+       if (response.ok) {
+         const data = await response.json();
+         if (Array.isArray(data) && data.length > 0) {
+           setCourses(data);
+           return;
+         }
+       }
+       
+       // If courses endpoint doesn't return data, fetch from degrees
+       const degreesResponse = await fetch(`${API_URL}/degrees`);
+       if (degreesResponse.ok) {
+         const degreesData = await degreesResponse.json();
+         const degreesList = degreesData.degrees || [];
+         
+         // Collect all courses from all degrees
+         const allCourses = [];
+         degreesList.forEach(degree => {
+           if (degree.courses && Array.isArray(degree.courses)) {
+             degree.courses.forEach(course => {
+               // Avoid duplicates by checking if course with same code already exists
+               if (!allCourses.find(c => c.code === course.code)) {
+                 allCourses.push(course);
+               }
+             });
+           }
+         });
+         setCourses(allCourses);
+       }
+     } catch (error) {
+       console.error("Error fetching courses:", error);
+     }
+   };
 
    const fetchDashboardStats = async () => {
      try {
@@ -101,7 +140,7 @@ export function Teacher() {
             <Route path="quiz" element={<ScheduleQuiz />} />
             <Route path="assignment" element={<ScheduleAssignment />} />
             <Route path="StudentGdb" element={<StudentGdb />} />
-            <Route path="videos" element={<LectureVideos />} />
+            <Route path="videos" element={<LectureVideos courses={courses} />} />
           </Routes>
         </div>
       </div>

@@ -15,7 +15,7 @@ const getEmbedUrl = (url) => {
   return videoId ? `https://www.youtube.com/embed/${videoId}` : null;
 };
 
-export function LectureVideos() {
+export function LectureVideos({ courses = [] }) {
   const [formData, setFormData] = useState({
     title: "",
     youtubeUrl: "",
@@ -28,10 +28,61 @@ export function LectureVideos() {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [selectedVideo, setSelectedVideo] = useState(null);
+  const [availableCourses, setAvailableCourses] = useState(courses);
+  const [selectedCourseId, setSelectedCourseId] = useState("");
+  const [coursesLoading, setCoursesLoading] = useState(false);
 
   useEffect(() => {
     fetchVideos();
+    if (courses.length === 0) {
+      fetchCourses();
+    }
   }, []);
+
+  useEffect(() => {
+    setAvailableCourses(courses);
+  }, [courses]);
+
+  const fetchCourses = async () => {
+    try {
+      setCoursesLoading(true);
+      // Try fetching from courses endpoint first
+      const response = await fetch(`${API_URL}/courses`);
+      if (response.ok) {
+        const data = await response.json();
+        if (Array.isArray(data) && data.length > 0) {
+          setAvailableCourses(data);
+          setCoursesLoading(false);
+          return;
+        }
+      }
+      
+      // If courses endpoint doesn't return data, fetch from degrees
+      const degreesResponse = await fetch(`${API_URL}/degrees`);
+      if (degreesResponse.ok) {
+        const degreesData = await degreesResponse.json();
+        const degreesList = degreesData.degrees || [];
+        
+        // Collect all courses from all degrees
+        const allCourses = [];
+        degreesList.forEach(degree => {
+          if (degree.courses && Array.isArray(degree.courses)) {
+            degree.courses.forEach(course => {
+              // Avoid duplicates by checking if course with same code already exists
+              if (!allCourses.find(c => c.code === course.code)) {
+                allCourses.push(course);
+              }
+            });
+          }
+        });
+        setAvailableCourses(allCourses);
+      }
+    } catch (err) {
+      console.error("Error fetching courses:", err);
+    } finally {
+      setCoursesLoading(false);
+    }
+  };
 
   const fetchVideos = async () => {
     try {
@@ -52,6 +103,25 @@ export function LectureVideos() {
     });
   };
 
+  const handleCourseChange = (e) => {
+    const courseId = e.target.value;
+    setSelectedCourseId(courseId);
+    const selectedCourse = availableCourses.find(course => course._id === courseId);
+    if (selectedCourse) {
+      setFormData({
+        ...formData,
+        courseCode: selectedCourse.code,
+        courseName: selectedCourse.title,
+      });
+    } else {
+      setFormData({
+        ...formData,
+        courseCode: "",
+        courseName: "",
+      });
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -63,6 +133,11 @@ export function LectureVideos() {
       const videoId = extractYouTubeId(formData.youtubeUrl);
       if (!videoId) {
         throw new Error("Please enter a valid YouTube URL");
+      }
+
+      // Validate course selection
+      if (!selectedCourseId || !formData.courseCode || !formData.courseName) {
+        throw new Error("Please select a course");
       }
 
       const user = JSON.parse(localStorage.getItem("user"));
@@ -97,6 +172,7 @@ export function LectureVideos() {
         courseName: "",
         description: "",
       });
+      setSelectedCourseId("");
       fetchVideos();
     } catch (err) {
       setError(err.message);
@@ -139,24 +215,28 @@ export function LectureVideos() {
             required
             style={{ width: "100%", marginBottom: "10px", padding: "8px" }}
           />
-          <input
-            type="text"
-            name="courseCode"
-            placeholder="Course Code"
-            value={formData.courseCode}
-            onChange={handleChange}
+          <select
+            name="course"
+            onChange={handleCourseChange}
+            value={selectedCourseId}
             required
+            disabled={coursesLoading}
             style={{ width: "100%", marginBottom: "10px", padding: "8px" }}
-          />
-          <input
-            type="text"
-            name="courseName"
-            placeholder="Course Name"
-            value={formData.courseName}
-            onChange={handleChange}
-            required
-            style={{ width: "100%", marginBottom: "10px", padding: "8px" }}
-          />
+          >
+            <option value="">
+              {coursesLoading ? "Loading courses..." : availableCourses.length === 0 ? "No courses available" : "Select a Course"}
+            </option>
+            {availableCourses.map((course) => (
+              <option key={course._id} value={course._id}>
+                {course.code} - {course.title}
+              </option>
+            ))}
+          </select>
+          {availableCourses.length === 0 && !coursesLoading && (
+            <p style={{ color: "#666", fontSize: "12px", marginTop: "-5px", marginBottom: "10px" }}>
+              No courses found. Please add courses first.
+            </p>
+          )}
           <textarea
             name="description"
             placeholder="Description (optional)"

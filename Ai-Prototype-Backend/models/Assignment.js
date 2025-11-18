@@ -29,6 +29,11 @@ const assignmentSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    submissionText: {
+      type: String,
+      trim: true,
+      default: "",
+    },
     score: {
       type: Number,
       default: null,

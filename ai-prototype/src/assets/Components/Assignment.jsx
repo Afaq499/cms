@@ -9,16 +9,39 @@ export function Assignment() {
   const [filteredAssignments, setFilteredAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedCourse, setSelectedCourse] = useState('CS505');
+  const [selectedCourse, setSelectedCourse] = useState('');
   const [filter, setFilter] = useState('all'); // 'all', 'submitted', 'pending', 'not-started'
+  const [user, setUser] = useState(null);
+  const [userRole, setUserRole] = useState('');
+  
+  // Modal states
+  const [showSubmitModal, setShowSubmitModal] = useState(false);
+  const [showGradeModal, setShowGradeModal] = useState(false);
+  const [selectedAssignment, setSelectedAssignment] = useState(null);
+  const [submissionText, setSubmissionText] = useState('');
+  const [gradeScore, setGradeScore] = useState('');
+  const [gradeRemarks, setGradeRemarks] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [grading, setGrading] = useState(false);
 
   useEffect(() => {
+    // Get user from localStorage
+    const currentUser = JSON.parse(localStorage.getItem("user"));
+    if (currentUser) {
+      setUser(currentUser);
+      const role = currentUser.role || 'Student';
+      setUserRole(role);
+      // For teachers, default to showing submitted assignments
+      if (role === 'Teacher') {
+        setFilter('submitted');
+      }
+    }
     fetchAssignments();
   }, []);
 
   useEffect(() => {
     filterAssignments();
-  }, [assignments, selectedCourse, filter]);
+  }, [assignments, selectedCourse, filter, user]);
 
   const fetchAssignments = async () => {
     try {
@@ -28,7 +51,29 @@ export function Assignment() {
         throw new Error('Failed to fetch assignments');
       }
       const data = await response.json();
-      setAssignments(data);
+      
+      // Filter assignments based on user role
+      const currentUser = JSON.parse(localStorage.getItem("user"));
+      let filteredData = data;
+      
+      if (currentUser && currentUser.role === 'Student') {
+        // For students, show all assignments (they can submit any assignment)
+        // But we can filter to show only their submissions if needed
+        filteredData = data;
+      } else if (currentUser && currentUser.role === 'Teacher') {
+        // For teachers, show assignments they created
+        filteredData = data.filter(assignment => {
+          const teacherId = assignment.teacherId?._id || assignment.teacherId;
+          return teacherId === currentUser._id;
+        });
+      }
+      
+      setAssignments(filteredData);
+      
+      // Set default course if available
+      if (filteredData.length > 0 && !selectedCourse) {
+        setSelectedCourse(filteredData[0].courseCode);
+      }
     } catch (err) {
       setError(err.message);
       console.error('Error fetching assignments:', err);
@@ -63,9 +108,14 @@ export function Assignment() {
   };
 
   const filterAssignments = () => {
-    let filtered = assignments.filter(assignment => 
-      assignment.courseCode === selectedCourse
-    );
+    let filtered = assignments;
+    
+    // Filter by course if a course is selected
+    if (selectedCourse) {
+      filtered = filtered.filter(assignment => 
+        assignment.courseCode === selectedCourse
+      );
+    }
 
     if (filter !== 'all') {
       filtered = filtered.filter(assignment => {
@@ -105,13 +155,116 @@ export function Assignment() {
   };
 
   const getCourseStats = (courseCode) => {
-    const courseAssignments = assignments.filter(a => a.courseCode === courseCode);
+    const courseAssignments = courseCode 
+      ? assignments.filter(a => a.courseCode === courseCode)
+      : assignments;
     const total = courseAssignments.length;
     const submitted = courseAssignments.filter(a => a.status.toLowerCase() === 'submitted').length;
     const pending = courseAssignments.filter(a => a.status.toLowerCase() === 'pending').length;
     const notStarted = courseAssignments.filter(a => a.status.toLowerCase() === 'not started').length;
     
     return { total, submitted, pending, notStarted };
+  };
+
+  // Handle assignment submission (for students)
+  const handleSubmitAssignment = async () => {
+    if (!selectedAssignment || !submissionText.trim()) {
+      alert('Please provide submission details');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      const currentUser = JSON.parse(localStorage.getItem("user"));
+      
+      const response = await fetch(`${API_URL}/assignments/${selectedAssignment._id}/submit`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          studentId: currentUser._id,
+          submissionText: submissionText,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to submit assignment');
+      }
+
+      await fetchAssignments();
+      setShowSubmitModal(false);
+      setSubmissionText('');
+      setSelectedAssignment(null);
+      alert('Assignment submitted successfully!');
+    } catch (err) {
+      alert(err.message || 'Error submitting assignment');
+      console.error('Error submitting assignment:', err);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Handle assignment grading (for teachers)
+  const handleGradeAssignment = async () => {
+    if (!selectedAssignment || !gradeScore) {
+      alert('Please provide a score');
+      return;
+    }
+
+    const score = parseFloat(gradeScore);
+    if (isNaN(score) || score < 0 || score > selectedAssignment.totalMarks) {
+      alert(`Score must be between 0 and ${selectedAssignment.totalMarks}`);
+      return;
+    }
+
+    try {
+      setGrading(true);
+      
+      const response = await fetch(`${API_URL}/assignments/${selectedAssignment._id}/grade`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          score: score,
+          remarks: gradeRemarks,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to grade assignment');
+      }
+
+      await fetchAssignments();
+      setShowGradeModal(false);
+      setGradeScore('');
+      setGradeRemarks('');
+      setSelectedAssignment(null);
+      alert('Assignment graded successfully!');
+    } catch (err) {
+      alert(err.message || 'Error grading assignment');
+      console.error('Error grading assignment:', err);
+    } finally {
+      setGrading(false);
+    }
+  };
+
+  // Open submit modal
+  const openSubmitModal = (assignment) => {
+    setSelectedAssignment(assignment);
+    setSubmissionText('');
+    setShowSubmitModal(true);
+  };
+
+  // Open grade modal
+  const openGradeModal = (assignment) => {
+    setSelectedAssignment(assignment);
+    setGradeScore(assignment.score || '');
+    setGradeRemarks(assignment.remarks || '');
+    setShowGradeModal(true);
   };
 
   if (loading) {
@@ -142,20 +295,22 @@ export function Assignment() {
         <h3>Assignment Management System</h3>
         
         {/* Course Selection */}
-        <div className="course-selection">
-          <h2>Select Course:</h2>
-          <div className="course-buttons">
-            {courses.map(course => (
-              <button
-                key={course.code}
-                className={`course-btn ${selectedCourse === course.code ? 'active' : ''}`}
-                onClick={() => handleCourseChange(course.code)}
-              >
-                {course.code} - {course.name}
-              </button>
-            ))}
+        {courses.length > 0 && (
+          <div className="course-selection">
+            <h2>Select Course:</h2>
+            <div className="course-buttons">
+              {courses.map(course => (
+                <button
+                  key={course.code}
+                  className={`course-btn ${selectedCourse === course.code ? 'active' : ''}`}
+                  onClick={() => handleCourseChange(course.code)}
+                >
+                  {course.code} - {course.name}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Course Stats */}
         <div className="assignment-stats">
@@ -206,7 +361,7 @@ export function Assignment() {
         </div>
 
         <div className="assignmentcolor">
-          <h3>Assignments - {selectedCourse}</h3>
+          <h3>Assignments{selectedCourse ? ` - ${selectedCourse}` : ''}</h3>
 
           <div className="assignmentdiv">
             <table border="1" cellPadding="8" cellSpacing="0">
@@ -219,12 +374,15 @@ export function Assignment() {
                   <th>Status</th>
                   <th>Score</th>
                   <th>Remarks</th>
+                  {userRole === 'Student' && <th>Actions</th>}
+                  {userRole === 'Teacher' && <th>Student</th>}
+                  {userRole === 'Teacher' && <th>Actions</th>}
                 </tr>
               </thead>
               <tbody>
                 {filteredAssignments.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="no-data">No assignments found</td>
+                    <td colSpan={userRole === 'Teacher' ? 9 : 8} className="no-data">No assignments found</td>
                   </tr>
                 ) : (
                   filteredAssignments.map((assignment, index) => (
@@ -239,9 +397,42 @@ export function Assignment() {
                         </span>
                       </td>
                       <td>
-                        {assignment.score !== null ? `Score: ${assignment.score}` : '-'}
+                        {assignment.score !== null && assignment.score !== undefined 
+                          ? `${assignment.score}/${assignment.totalMarks}` 
+                          : '-'}
                       </td>
                       <td>{assignment.remarks || '-'}</td>
+                      {userRole === 'Student' && (
+                        <td>
+                          {assignment.status.toLowerCase() !== 'submitted' && (
+                            <button
+                              className="submit-btn"
+                              onClick={() => openSubmitModal(assignment)}
+                            >
+                              Submit
+                            </button>
+                          )}
+                        </td>
+                      )}
+                      {userRole === 'Teacher' && (
+                        <>
+                          <td>
+                            {assignment.studentId 
+                              ? (assignment.studentId.name || assignment.studentId.email || 'N/A')
+                              : 'Unassigned'}
+                          </td>
+                          <td>
+                            {assignment.status.toLowerCase() === 'submitted' && (
+                              <button
+                                className="grade-btn"
+                                onClick={() => openGradeModal(assignment)}
+                              >
+                                Grade
+                              </button>
+                            )}
+                          </td>
+                        </>
+                      )}
                     </tr>
                   ))
                 )}
@@ -249,6 +440,122 @@ export function Assignment() {
             </table>
           </div>
         </div>
+
+        {/* Submit Assignment Modal (for Students) */}
+        {showSubmitModal && selectedAssignment && (
+          <div className="modal-overlay" onClick={() => setShowSubmitModal(false)}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h3>Submit Assignment</h3>
+                <button className="modal-close" onClick={() => setShowSubmitModal(false)}>×</button>
+              </div>
+              <div className="modal-body">
+                <p><strong>Assignment:</strong> {selectedAssignment.assignmentNumber} - {selectedAssignment.title}</p>
+                <p><strong>Course:</strong> {selectedAssignment.courseCode} - {selectedAssignment.courseName}</p>
+                <p><strong>Due Date:</strong> {formatDate(selectedAssignment.dueDate)}</p>
+                {selectedAssignment.description && (
+                  <div>
+                    <strong>Description:</strong>
+                    <p>{selectedAssignment.description}</p>
+                  </div>
+                )}
+                {selectedAssignment.instructions && (
+                  <div>
+                    <strong>Instructions:</strong>
+                    <p>{selectedAssignment.instructions}</p>
+                  </div>
+                )}
+                <div className="form-group">
+                  <label htmlFor="submissionText">Submission Details / Notes:</label>
+                  <textarea
+                    id="submissionText"
+                    rows="6"
+                    value={submissionText}
+                    onChange={(e) => setSubmissionText(e.target.value)}
+                    placeholder="Enter your submission details, notes, or file links here..."
+                    required
+                  />
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button className="btn-cancel" onClick={() => setShowSubmitModal(false)}>
+                  Cancel
+                </button>
+                <button 
+                  className="btn-submit" 
+                  onClick={handleSubmitAssignment}
+                  disabled={submitting || !submissionText.trim()}
+                >
+                  {submitting ? 'Submitting...' : 'Submit Assignment'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Grade Assignment Modal (for Teachers) */}
+        {showGradeModal && selectedAssignment && (
+          <div className="modal-overlay" onClick={() => setShowGradeModal(false)}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h3>Grade Assignment</h3>
+                <button className="modal-close" onClick={() => setShowGradeModal(false)}>×</button>
+              </div>
+              <div className="modal-body">
+                <p><strong>Assignment:</strong> {selectedAssignment.assignmentNumber} - {selectedAssignment.title}</p>
+                <p><strong>Student:</strong> {
+                  selectedAssignment.studentId 
+                    ? (selectedAssignment.studentId.name || selectedAssignment.studentId.email || 'N/A')
+                    : 'N/A'
+                }</p>
+                <p><strong>Course:</strong> {selectedAssignment.courseCode} - {selectedAssignment.courseName}</p>
+                <p><strong>Total Marks:</strong> {selectedAssignment.totalMarks}</p>
+                <p><strong>Submitted Date:</strong> {formatDate(selectedAssignment.submittedDate)}</p>
+                {selectedAssignment.submissionText && (
+                  <div style={{ marginTop: '15px', padding: '10px', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
+                    <strong>Student Submission:</strong>
+                    <p style={{ marginTop: '8px', whiteSpace: 'pre-wrap' }}>{selectedAssignment.submissionText}</p>
+                  </div>
+                )}
+                <div className="form-group">
+                  <label htmlFor="gradeScore">Score (out of {selectedAssignment.totalMarks}):</label>
+                  <input
+                    type="number"
+                    id="gradeScore"
+                    min="0"
+                    max={selectedAssignment.totalMarks}
+                    step="0.5"
+                    value={gradeScore}
+                    onChange={(e) => setGradeScore(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="gradeRemarks">Remarks:</label>
+                  <textarea
+                    id="gradeRemarks"
+                    rows="4"
+                    value={gradeRemarks}
+                    onChange={(e) => setGradeRemarks(e.target.value)}
+                    placeholder="Enter feedback or remarks..."
+                  />
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button className="btn-cancel" onClick={() => setShowGradeModal(false)}>
+                  Cancel
+                </button>
+                <button 
+                  className="btn-submit" 
+                  onClick={handleGradeAssignment}
+                  disabled={grading || !gradeScore}
+                >
+                  {grading ? 'Grading...' : 'Submit Grade'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <Sidebar />
