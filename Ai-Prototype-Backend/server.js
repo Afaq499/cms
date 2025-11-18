@@ -51,6 +51,7 @@ app.use("/api/videos", require("./routes/lectureVideoRoutes"));
 app.use("/api/reports", require("./routes/reportRoutes"));
 app.use("/api/admin", require("./routes/adminRoutes"));
 app.use("/api/degrees", require("./routes/degreeRoutes"));
+app.use("/api/dashboard", require("./routes/dashboardRoutes"));
 
 
 const PORT = process.env.PORT || 5003;
