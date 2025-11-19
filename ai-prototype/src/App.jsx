@@ -17,6 +17,7 @@ import { Teacher } from "./assets/Components/Teacher";
 import { Admin } from "./assets/Components/Admin";
 import { ProtectedRoute } from "./assets/Components/ProtectedRoute";
 import { StudentGdb } from "./assets/Components/StudentGdb";
+import { StudentChatbot } from "./assets/Components/StudentChatbot";
 
 // Teacher sub-components
 import { StudentProgress } from "./assets/Components/StudentProgress";
@@ -107,6 +108,14 @@ export function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/chatbot"
+            element={
+              <ProtectedRoute allowedRoles={["Student"]}>
+                <StudentChatbot />
+              </ProtectedRoute>
+            }
+          />
 
           {/* --- Teacher Routes --- */}
           <Route
@@ -122,7 +131,7 @@ export function App() {
             <Route path="report" element={<GenerateReport />} />
             <Route path="quiz" element={<ScheduleQuiz />} />
             <Route path="assignment" element={<ScheduleAssignment />} />
-            <Route path="gdb" element={<StudentGdb />} />
+            {/* <Route path="gdb" element={<StudentGdb />} /> */}
             <Route path="lecture" element={<LectureVideos />} />
           </Route>
 
@@ -137,7 +146,7 @@ export function App() {
           />
         </Routes>
       </main>
-      <Footer />
+      {/* <Footer /> */}
     </Router>
   );
 }

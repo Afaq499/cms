@@ -170,7 +170,7 @@ export function Student() {
                         </span>
                       )}
                     </a>
-                    <a href="/gdb" title={`${course.counts.gdbs} GDB(s)`} style={{ position: "relative", display: "inline-block" }}>
+                    {/* <a href="/gdb" title={`${course.counts.gdbs} GDB(s)`} style={{ position: "relative", display: "inline-block" }}>
                       <img src="/images/gdb.png" alt="GDB" width={60} height={60} />
                       {course.counts.gdbs > 0 && (
                         <span style={{
@@ -192,7 +192,7 @@ export function Student() {
                           {course.counts.gdbs}
                         </span>
                       )}
-                    </a>
+                    </a> */}
                     <a href={`/quiz?course=${encodeURIComponent(course.courseCode)}`} title={`${course.counts.quizzes} Quiz(zes)`} style={{ position: "relative", display: "inline-block" }}>
                       <img src="/images/quiz.png" alt="Quiz" width={60} height={60} />
                       {course.counts.quizzes > 0 && (

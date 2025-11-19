@@ -71,6 +71,11 @@
   flex: 1;
 }
 
+.studentmain h1 {
+  color: #2c3e50;
+  margin-bottom: 20px;
+}
+
 /* Two column layout */
 .two-cols {
   display: flex;

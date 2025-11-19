@@ -18,6 +18,7 @@ export function Sidebar() {
           <li><NavLink to="/course">Course</NavLink></li>
           <li><NavLink to="/progress">Progress</NavLink></li>
           <li><NavLink to="/fee">Fee Voucher</NavLink></li>
+          <li><NavLink to="/chatbot">Chatbot</NavLink></li>
           <li><NavLink to="/profile">Profile</NavLink></li>
           {/* Logout as button */}
           <li>

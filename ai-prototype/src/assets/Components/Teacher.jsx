@@ -101,9 +101,9 @@ export function Teacher() {
           <li>
             <NavLink to="/teacher/assignment">Schedule Assignment</NavLink>
           </li>
-          <li>
+          {/* <li>
             <NavLink to="/teacher/StudentGdb">GDB</NavLink>
-          </li>
+          </li> */}
           <li>
             <NavLink to="/teacher/videos">Lecture Videos</NavLink>
           </li>
@@ -139,7 +139,7 @@ export function Teacher() {
             <Route path="report" element={<GenerateReport />} />
             <Route path="quiz" element={<ScheduleQuiz />} />
             <Route path="assignment" element={<ScheduleAssignment />} />
-            <Route path="StudentGdb" element={<StudentGdb />} />
+            {/* <Route path="StudentGdb" element={<StudentGdb />} /> */}
             <Route path="videos" element={<LectureVideos courses={courses} />} />
           </Routes>
         </div>

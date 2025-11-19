@@ -8,10 +8,22 @@
 }
 
 /* Page heading */
+.assignmentmain h2,
 .assignmentmain h3 {
   color: #2c3e50;
   margin-bottom: 20px;
+}
+
+.assignmentmain h2 {
+  font-size: 24px;
+}
+
+.assignmentmain h3 {
   font-size: 20px;
+}
+
+.assignmentmain p {
+  color: #333;
 }
 
 /* Table styling */
