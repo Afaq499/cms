@@ -49,35 +49,6 @@ router.post("/", async (req, res) => {
     const savedQuiz = await quiz.save();
     await savedQuiz.populate("createdBy", "name email");
 
-    // Create assignments for all students when a teacher schedules a quiz
-    try {
-      // Get all students
-      const students = await User.find({ role: "Student" });
-      
-      // Create an assignment for each student based on the quiz
-      const assignments = students.map((student) => ({
-        assignmentNumber: `Quiz-${savedQuiz._id.toString().slice(-6)}`,
-        title: savedQuiz.title,
-        courseCode: savedQuiz.courseCode,
-        courseName: savedQuiz.courseName,
-        dueDate: savedQuiz.scheduledDate,
-        totalMarks: savedQuiz.totalMarks,
-        description: savedQuiz.description || `Quiz: ${savedQuiz.title}`,
-        instructions: savedQuiz.instructions || `Complete the quiz scheduled for ${new Date(savedQuiz.scheduledDate).toLocaleDateString()} at ${savedQuiz.scheduledTime}`,
-        studentId: student._id,
-        teacherId: savedQuiz.createdBy,
-        status: "Not Started",
-      }));
-
-      // Insert all assignments
-      if (assignments.length > 0) {
-        await Assignment.insertMany(assignments);
-      }
-    } catch (assignmentError) {
-      // Log error but don't fail the quiz creation
-      console.error("Error creating assignments from quiz:", assignmentError);
-    }
-
     res.status(201).json(savedQuiz);
   } catch (error) {
     res.status(400).json({ message: error.message });

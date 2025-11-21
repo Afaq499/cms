@@ -63,6 +63,11 @@ const assignmentSchema = new mongoose.Schema(
       trim: true,
       default: "",
     },
+    content: {
+      type: String,
+      trim: true,
+      default: "",
+    },
     studentId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

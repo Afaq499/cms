@@ -3,7 +3,6 @@ import { API_URL } from "./constants";
 
 export function ScheduleAssignment() {
   const [formData, setFormData] = useState({
-    assignmentNumber: "",
     title: "",
     courseCode: "",
     courseName: "",
@@ -11,8 +10,10 @@ export function ScheduleAssignment() {
     totalMarks: 100,
     description: "",
     instructions: "",
+    content: "",
   });
   const [assignments, setAssignments] = useState([]);
+  const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -32,7 +33,59 @@ export function ScheduleAssignment() {
 
   useEffect(() => {
     fetchAssignments();
+    fetchCourses();
   }, []);
+
+  const fetchCourses = async () => {
+    try {
+      // Get current teacher
+      const user = JSON.parse(localStorage.getItem("user"));
+      if (!user || !user._id) {
+        return;
+      }
+
+      // Try fetching from courses endpoint first
+      const response = await fetch(`${API_URL}/courses`);
+      if (response.ok) {
+        const data = await response.json();
+        if (Array.isArray(data) && data.length > 0) {
+          setCourses(data);
+          return;
+        }
+      }
+
+      // If courses endpoint doesn't return data, fetch from degrees
+      const degreesResponse = await fetch(`${API_URL}/degrees`);
+      if (degreesResponse.ok) {
+        const degreesData = await degreesResponse.json();
+        const degreesList = degreesData.degrees || [];
+        
+        // Get all courses from all degrees
+        const allCourses = [];
+        degreesList.forEach(degree => {
+          if (degree.courses && Array.isArray(degree.courses)) {
+            degree.courses.forEach(course => {
+              // Only include courses that the teacher teaches (if teacher has courses array)
+              if (!user.courses || user.courses.length === 0 || user.courses.includes(course.code)) {
+                // Avoid duplicates
+                if (!allCourses.find(c => c.code === course.code)) {
+                  allCourses.push({
+                    code: course.code,
+                    title: course.title || course.name,
+                    degreeName: degree.name,
+                  });
+                }
+              }
+            });
+          }
+        });
+        
+        setCourses(allCourses);
+      }
+    } catch (err) {
+      console.error("Error fetching courses:", err);
+    }
+  };
 
   const fetchAssignments = async () => {
     try {
@@ -156,6 +209,24 @@ export function ScheduleAssignment() {
     });
   };
 
+  const handleCourseChange = (e) => {
+    const selectedCourseCode = e.target.value;
+    const selectedCourse = courses.find(c => c.code === selectedCourseCode);
+    if (selectedCourse) {
+      setFormData({
+        ...formData,
+        courseCode: selectedCourse.code,
+        courseName: selectedCourse.title || selectedCourse.name,
+      });
+    } else {
+      setFormData({
+        ...formData,
+        courseCode: "",
+        courseName: "",
+      });
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -168,9 +239,15 @@ export function ScheduleAssignment() {
         throw new Error("User not logged in");
       }
 
+      // Auto-generate assignment number based on course code and timestamp
+      const timestamp = Date.now();
+      const coursePrefix = formData.courseCode ? formData.courseCode.replace(/\s+/g, '').toUpperCase() : 'ASSIGN';
+      const assignmentNumber = `${coursePrefix}-${timestamp}`;
+
       // Combine date and time if needed, or just use date
       const assignmentData = {
         ...formData,
+        assignmentNumber: assignmentNumber,
         dueDate: new Date(formData.dueDate).toISOString(),
         totalMarks: parseInt(formData.totalMarks),
         teacherId: user._id,
@@ -192,7 +269,6 @@ export function ScheduleAssignment() {
       const newAssignment = await response.json();
       setSuccess("Assignment scheduled successfully!");
       setFormData({
-        assignmentNumber: "",
         title: "",
         courseCode: "",
         courseName: "",
@@ -200,6 +276,7 @@ export function ScheduleAssignment() {
         totalMarks: 100,
         description: "",
         instructions: "",
+        content: "",
       });
       fetchAssignments();
     } catch (err) {
@@ -215,36 +292,33 @@ export function ScheduleAssignment() {
       <form onSubmit={handleSubmit}>
         <input
           type="text"
-          name="assignmentNumber"
-          placeholder="Assignment Number"
-          value={formData.assignmentNumber}
-          onChange={handleChange}
-          required
-        />
-        <input
-          type="text"
           name="title"
           placeholder="Assignment Title"
           value={formData.title}
           onChange={handleChange}
           required
         />
-        <input
-          type="text"
-          name="courseCode"
-          placeholder="Course Code"
+        <select
+          name="course"
           value={formData.courseCode}
-          onChange={handleChange}
+          onChange={handleCourseChange}
           required
-        />
-        <input
-          type="text"
-          name="courseName"
-          placeholder="Course Name"
-          value={formData.courseName}
-          onChange={handleChange}
-          required
-        />
+          style={{
+            padding: "10px",
+            fontSize: "14px",
+            borderRadius: "5px",
+            border: "1px solid #ddd",
+            width: "100%",
+            boxSizing: "border-box"
+          }}
+        >
+          <option value="">Select Course</option>
+          {courses.map((course) => (
+            <option key={course.code} value={course.code}>
+              {course.code} - {course.title || course.name}
+            </option>
+          ))}
+        </select>
         <input
           type="datetime-local"
           name="dueDate"
@@ -273,6 +347,15 @@ export function ScheduleAssignment() {
           value={formData.instructions}
           onChange={handleChange}
           rows="3"
+        />
+        <textarea
+          name="content"
+          placeholder="Assignment Content (required)"
+          value={formData.content}
+          onChange={handleChange}
+          rows="6"
+          required
+          style={{ marginTop: "10px" }}
         />
         <button type="submit" disabled={loading}>
           {loading ? "Scheduling..." : "Schedule Assignment"}
