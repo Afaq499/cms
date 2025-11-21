@@ -1,7 +1,6 @@
 /ai-prototype/node_modules
 /ai-prototype/dist
 /ai-prototype/build
-/ai-prototype/public
 /ai-prototype/README.md
 
 /Ai-Prototype-Backend/node_modules
@@ -9,4 +8,5 @@
 /Ai-Prototype-Backend/build
 /Ai-Prototype-Backend/public
 /Ai-Prototype-Backend/README.md
-.env
+config.bat
+node_modules
