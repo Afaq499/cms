@@ -12,10 +12,86 @@ const { syncStudentProgress } = require("../utils/progressCalculator");
 
 // Gemini API Configuration
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "";
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+const GEMINI_FALLBACK_MODELS = (process.env.GEMINI_FALLBACK_MODELS || "gemini-2.5-flash-lite,gemini-1.5-flash")
+  .split(",")
+  .map((m) => m.trim())
+  .filter(Boolean);
 
-// Initialize Google Generative AI
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+
+async function generateChatResponse(prompt) {
+  const modelsToTry = [GEMINI_MODEL, ...GEMINI_FALLBACK_MODELS.filter((m) => m !== GEMINI_MODEL)];
+  let lastError;
+
+  for (const modelName of modelsToTry) {
+    try {
+      const model = genAI.getGenerativeModel({ model: modelName });
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      return {
+        text: response.text() || "Sorry, I couldn't understand that. Please try rephrasing your question.",
+        model: modelName,
+      };
+    } catch (error) {
+      lastError = error;
+      const isQuotaError = error.status === 429 || (error.message || "").includes("429");
+      const isModelUnavailable =
+        (error.message || "").includes("404") ||
+        (error.message || "").includes("not found");
+
+      if (isQuotaError || isModelUnavailable) {
+        console.warn(`Gemini model "${modelName}" unavailable, trying next...`);
+        continue;
+      }
+      throw error;
+    }
+  }
+
+  throw lastError;
+}
+
+function getGeminiErrorResponse(error) {
+  const message = error.message || "";
+  const reason = error.errorDetails?.find((d) => d.reason)?.reason || "";
+
+  if (error.status === 429 || message.includes("429") || message.includes("quota")) {
+    const retryInfo = error.errorDetails?.find((d) => d["@type"]?.includes("RetryInfo"));
+    const retrySeconds = retryInfo?.retryDelay
+      ? Math.ceil(parseFloat(String(retryInfo.retryDelay).replace("s", "")))
+      : null;
+
+    const limitZero = message.includes("limit: 0");
+    return {
+      status: 429,
+      error: limitZero
+        ? "Gemini free-tier quota is 0 for this model/project. Link billing at https://console.cloud.google.com/billing (free tier still applies) or set GEMINI_MODEL=gemini-2.5-flash in .env and create a new key at https://aistudio.google.com/apikey."
+        : "Gemini rate limit exceeded. Please wait a minute and try again.",
+      ...(retrySeconds && { retryAfterSeconds: retrySeconds }),
+    };
+  }
+
+  if (reason === "API_KEY_SERVICE_BLOCKED" || message.includes("API_KEY_SERVICE_BLOCKED")) {
+    return {
+      status: 403,
+      error:
+        "Your Google API key cannot access the Gemini API. Create a new key at https://aistudio.google.com/apikey (not Firebase/Cloud Console generic keys). If using Cloud Console, enable 'Generative Language API' and add it to the key's API restrictions.",
+    };
+  }
+
+  if (reason === "API_KEY_INVALID" || message.includes("API key not valid")) {
+    return {
+      status: 401,
+      error: "Invalid Gemini API key. Generate a new key at https://aistudio.google.com/apikey and set GEMINI_API_KEY or GOOGLE_API_KEY in .env.",
+    };
+  }
+
+  return {
+    status: 500,
+    error: "Failed to generate chatbot response",
+    message: error.message || "Unknown Gemini API error",
+  };
+}
 
 // Build system prompt with student context
 const buildSystemPrompt = (studentData) => {
@@ -292,10 +368,8 @@ router.post("/message", async (req, res) => {
     const systemPrompt = buildSystemPrompt(studentData);
     const fullPrompt = `${systemPrompt}\n\nStudent Question: ${message}\n\nAssistant Response:`;
 
-    // Generate content using Gemini API
-    const result = await model.generateContent(fullPrompt);
-    const response = await result.response;
-    const botMessage = response.text() || "Sorry, I couldn't understand that. Please try rephrasing your question.";
+    // Generate content using Gemini API (with model fallback on quota errors)
+    const { text: botMessage } = await generateChatResponse(fullPrompt);
 
     res.json({ 
       message: botMessage,
@@ -303,10 +377,10 @@ router.post("/message", async (req, res) => {
     });
   } catch (error) {
     console.error("Error in chatbot endpoint:", error);
-    res.status(500).json({ 
-      error: "Internal server error",
-      message: error.message || "Failed to generate response",
-      details: error.response?.data || error.cause?.message || error.stack
+    const { status, error: errorMessage, message } = getGeminiErrorResponse(error);
+    res.status(status).json({
+      error: errorMessage,
+      ...(message && { message }),
     });
   }
 });
