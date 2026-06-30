@@ -93,8 +93,9 @@ export function StudentsManagement() {
         // Fetch existing assigned courses (Progress records)
         const progressResponse = await fetch(`${API_URL}/progress/student/${studentId}`);
         const progressData = await progressResponse.json();
-        if (progressData && Array.isArray(progressData)) {
-          const assignedCourseCodes = progressData.map(p => p.courseCode);
+        const progressCourses = progressData.courses || progressData;
+        if (progressCourses && Array.isArray(progressCourses)) {
+          const assignedCourseCodes = progressCourses.map((p) => p.courseCode);
           setSelectedCourses(assignedCourseCodes);
         }
       }

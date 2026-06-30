@@ -4,6 +4,7 @@ const Progress = require("../models/Progress");
 const Assignment = require("../models/Assignment");
 const User = require("../models/User");
 const Quiz = require("../models/Quiz");
+const { syncStudentProgress } = require("../utils/progressCalculator");
 
 // Generate comprehensive student report
 router.get("/student/:studentId", async (req, res) => {
@@ -16,9 +17,8 @@ router.get("/student/:studentId", async (req, res) => {
       return res.status(404).json({ message: "Student not found" });
     }
 
-    // Get progress records
-    const progress = await Progress.find({ studentId })
-      .sort({ createdAt: -1 });
+    // Get progress records (synced from actual assignment & quiz data)
+    const progress = await syncStudentProgress(studentId);
 
     // Get assignments
     const assignments = await Assignment.find()

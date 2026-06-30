@@ -5,6 +5,7 @@ import { API_URL } from "./constants";
 
 export function Progress() {
   const [progressData, setProgressData] = useState([]);
+  const [studentInfo, setStudentInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -15,22 +16,34 @@ export function Progress() {
   const fetchProgressData = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/progress`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch progress data');
+      setError(null);
+
+      const currentUser = JSON.parse(localStorage.getItem("user"));
+      if (!currentUser || !currentUser._id) {
+        setError("User not found. Please login again.");
+        setLoading(false);
+        return;
       }
+
+      const response = await fetch(`${API_URL}/progress/student/${currentUser._id}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch progress data");
+      }
+
       const data = await response.json();
-      setProgressData(data);
+      setStudentInfo(data.student || null);
+      setProgressData(data.courses || []);
     } catch (err) {
       setError(err.message);
-      console.error('Error fetching progress data:', err);
+      console.error("Error fetching progress data:", err);
     } finally {
       setLoading(false);
     }
   };
 
   const formatGrade = (grade) => {
-    return grade === 0 ? "Pending" : `${grade}%`;
+    if (grade == null) return "Pending";
+    return `${grade}%`;
   };
 
   const getStatusClass = (status) => {
@@ -44,6 +57,14 @@ export function Progress() {
       default:
         return "";
     }
+  };
+
+  const getHeaderSubtitle = () => {
+    if (!studentInfo) return "";
+    const parts = [];
+    if (studentInfo.degree) parts.push(`Degree: ${studentInfo.degree}`);
+    if (studentInfo.batch) parts.push(`Batch: ${studentInfo.batch}`);
+    return parts.join(" | ");
   };
 
   if (loading) {
@@ -67,15 +88,18 @@ export function Progress() {
         <div className="progressPage">
           <div className="progressHeader">
             <h2>Student Progress Report</h2>
-            <p style={{ color: 'red' }}>Error: {error}</p>
-            <button onClick={fetchProgressData} style={{ 
-              padding: '10px 20px', 
-              backgroundColor: '#007bff', 
-              color: 'white', 
-              border: 'none', 
-              borderRadius: '5px',
-              cursor: 'pointer'
-            }}>
+            <p style={{ color: "red" }}>Error: {error}</p>
+            <button
+              onClick={fetchProgressData}
+              style={{
+                padding: "10px 20px",
+                backgroundColor: "#007bff",
+                color: "white",
+                border: "none",
+                borderRadius: "5px",
+                cursor: "pointer",
+              }}
+            >
               Retry
             </button>
           </div>
@@ -88,45 +112,52 @@ export function Progress() {
     <>
       <Sidebar />
       <div className="progressPage">
-        {/* Progress Header */}
         <div className="progressHeader">
           <h2>Student Progress Report</h2>
-          <p>Degree: BS Information Technology | Session: Spring 2022</p>
+          {studentInfo && (
+            <>
+              <p>{studentInfo.name} {studentInfo.studentId ? `(${studentInfo.studentId})` : ""}</p>
+              {getHeaderSubtitle() && <p>{getHeaderSubtitle()}</p>}
+            </>
+          )}
         </div>
 
-        {/* Student Progress Table */}
         <div className="progressTableSection">
           <h3 className="sectionTitle">Course Progress</h3>
-          <table className="progressTable">
-            <thead>
-              <tr>
-                <th>Course Code</th>
-                <th>Course Title</th>
-                <th>Assignments</th>
-                <th>Quizzes</th>
-                <th>Midterm</th>
-                <th>Final</th>
-                <th>Overall Grade</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {progressData.map((course, index) => (
-                <tr key={index}>
-                  <td>{course.courseCode}</td>
-                  <td>{course.courseTitle}</td>
-                  <td>{formatGrade(course.assignments)}</td>
-                  <td>{formatGrade(course.quizzes)}</td>
-                  <td>{formatGrade(course.midterm)}</td>
-                  <td>{formatGrade(course.final)}</td>
-                  <td>{course.overallGrade}</td>
-                  <td className={getStatusClass(course.status)}>
-                    {course.status}
-                  </td>
+          {progressData.length === 0 ? (
+            <p>No courses assigned yet. Please contact your administrator.</p>
+          ) : (
+            <table className="progressTable">
+              <thead>
+                <tr>
+                  <th>Course Code</th>
+                  <th>Course Title</th>
+                  <th>Assignments</th>
+                  <th>Quizzes</th>
+                  <th>Midterm</th>
+                  <th>Final</th>
+                  <th>Overall Grade</th>
+                  <th>Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {progressData.map((course) => (
+                  <tr key={course._id || course.courseCode}>
+                    <td>{course.courseCode}</td>
+                    <td>{course.courseTitle}</td>
+                    <td>{formatGrade(course.assignments)}</td>
+                    <td>{formatGrade(course.quizzes)}</td>
+                    <td>{formatGrade(course.midterm)}</td>
+                    <td>{formatGrade(course.final)}</td>
+                    <td>{course.overallGrade || "—"}</td>
+                    <td className={getStatusClass(course.status)}>
+                      {course.status}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
     </>

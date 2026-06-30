@@ -4,6 +4,7 @@ const Quiz = require("../models/Quiz");
 const QuizSubmission = require("../models/QuizSubmission");
 const Assignment = require("../models/Assignment");
 const User = require("../models/User");
+const { syncProgressForCourse } = require("../utils/progressCalculator");
 
 // GET all quizzes
 router.get("/", async (req, res) => {
@@ -208,6 +209,11 @@ router.post("/:id/grade/:submissionId", async (req, res) => {
     await submission.save();
     await submission.populate("studentId", "name email");
     await submission.populate("quizId");
+
+    const quiz = submission.quizId;
+    if (quiz && quiz.courseCode && submission.studentId) {
+      await syncProgressForCourse(submission.studentId._id || submission.studentId, quiz.courseCode);
+    }
 
     res.json(submission);
   } catch (error) {

@@ -8,6 +8,7 @@ const Assignment = require("../models/Assignment");
 const Quiz = require("../models/Quiz");
 const LectureVideo = require("../models/LectureVideo");
 const Gdb = require("../models/Gdb");
+const { syncStudentProgress } = require("../utils/progressCalculator");
 
 // Gemini API Configuration
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "";
@@ -107,8 +108,8 @@ const fetchStudentData = async (studentId) => {
     // Get all courses from the student's degree
     const degreeCourses = degree.courses || [];
 
-    // Get student's progress records to enrich course data
-    const progressRecords = await Progress.find({ studentId });
+    // Get student's progress records (synced from actual grades)
+    const progressRecords = await syncStudentProgress(studentId);
     const progressMap = {};
     progressRecords.forEach(progress => {
       progressMap[progress.courseCode] = progress;

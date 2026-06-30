@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Assignment = require("../models/Assignment");
+const { syncProgressForCourse } = require("../utils/progressCalculator");
 
 // GET all assignments
 router.get("/", async (req, res) => {
@@ -87,6 +88,11 @@ router.patch("/:id/submit", async (req, res) => {
     if (!assignment) {
       return res.status(404).json({ message: "Assignment not found" });
     }
+
+    if (assignment.studentId && assignment.courseCode) {
+      await syncProgressForCourse(assignment.studentId, assignment.courseCode);
+    }
+
     res.json(assignment);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -105,6 +111,11 @@ router.patch("/:id/grade", async (req, res) => {
     if (!assignment) {
       return res.status(404).json({ message: "Assignment not found" });
     }
+
+    if (assignment.studentId && assignment.courseCode) {
+      await syncProgressForCourse(assignment.studentId, assignment.courseCode);
+    }
+
     res.json(assignment);
   } catch (error) {
     res.status(400).json({ message: error.message });

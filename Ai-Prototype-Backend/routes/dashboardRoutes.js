@@ -7,6 +7,7 @@ const Assignment = require("../models/Assignment");
 const Quiz = require("../models/Quiz");
 const LectureVideo = require("../models/LectureVideo");
 const Gdb = require("../models/Gdb");
+const { syncStudentProgress } = require("../utils/progressCalculator");
 
 // Get student dashboard with all course-related data
 router.get("/student/:studentId", async (req, res) => {
@@ -51,8 +52,23 @@ router.get("/student/:studentId", async (req, res) => {
     // Get all courses from the student's degree
     const degreeCourses = degree.courses || [];
 
-    // Get student's progress records to enrich course data
-    const progressRecords = await Progress.find({ studentId });
+    // Get student's progress records (synced from actual grades)
+    const progressRecords = await syncStudentProgress(studentId);
+
+    if (progressRecords.length === 0) {
+      return res.json({
+        student: {
+          id: student._id,
+          name: student.name,
+          email: student.email,
+          degree: student.degree,
+          studentId: student.studentId || null,
+        },
+        courses: [],
+        message: "No courses assigned to this student",
+      });
+    }
+
     const progressMap = {};
     progressRecords.forEach(progress => {
       progressMap[progress.courseCode] = progress;
@@ -78,8 +94,8 @@ router.get("/student/:studentId", async (req, res) => {
       }
     });
 
-    // Get all course codes from degree courses
-    const courseCodes = degreeCourses.map(c => c.code);
+    // Only fetch data for enrolled courses
+    const courseCodes = progressRecords.map((p) => p.courseCode);
 
     // Fetch all related data for these courses
     const [assignments, quizzes, videos, gdbs] = await Promise.all([
@@ -193,8 +209,13 @@ router.get("/student/:studentId", async (req, res) => {
       });
     });
 
-    // Build enriched course data from degree courses
-    const enrichedCourses = degreeCourses.map(course => {
+    // Build enriched course data from enrolled courses only
+    const enrolledCourseCodes = new Set(progressRecords.map((p) => p.courseCode));
+    const enrolledCourses = degreeCourses.filter((course) =>
+      enrolledCourseCodes.has(course.code)
+    );
+
+    const enrichedCourses = enrolledCourses.map(course => {
       const progress = progressMap[course.code] || null;
       const teacher = courseTeacherMap[course.code] || null;
 
@@ -209,10 +230,10 @@ router.get("/student/:studentId", async (req, res) => {
         degreeName: degree.name,
         degreeCode: degree.code,
         progress: progress ? {
-          assignments: progress.assignments || 0,
-          quizzes: progress.quizzes || 0,
-          midterm: progress.midterm || 0,
-          final: progress.final || 0,
+          assignments: progress.assignments ?? null,
+          quizzes: progress.quizzes ?? null,
+          midterm: progress.midterm ?? null,
+          final: progress.final ?? null,
           overallGrade: progress.overallGrade || "—",
           status: progress.status || "In Progress",
           semester: progress.semester,
