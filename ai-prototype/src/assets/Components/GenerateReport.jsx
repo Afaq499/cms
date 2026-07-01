@@ -54,23 +54,43 @@ export function GenerateReport() {
     }
   };
 
+  const formatGrade = (grade) => {
+    if (grade == null) return "Pending";
+    return `${grade}%`;
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "—";
+    return new Date(dateString).toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
+  const formatScore = (score, totalMarks) => {
+    if (score == null) return "Not graded";
+    return `${score} / ${totalMarks}`;
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
-    <div className="form-container">
+    <div className="form-container report-page">
       <h2>Generate Student Report</h2>
-      <form onSubmit={handleGenerateReport}>
+      <p className="detail-subtitle">
+        Select a student to generate a report with scores, quizzes, and assignments per subject.
+      </p>
+
+      <form onSubmit={handleGenerateReport} className="report-form">
         <select
           value={studentId}
           onChange={(e) => setStudentId(e.target.value)}
           disabled={loadingStudents}
           required
-          style={{
-            width: "100%",
-            padding: "10px",
-            marginBottom: "10px",
-            fontSize: "16px",
-            border: "1px solid #ddd",
-            borderRadius: "4px",
-          }}
+          className="report-select"
         >
           <option value="">Select a student...</option>
           {students.map((student) => (
@@ -84,66 +104,230 @@ export function GenerateReport() {
         </button>
       </form>
 
-      {error && <div style={{ color: "red", marginTop: "10px" }}>{error}</div>}
+      {error && <div className="report-error">{error}</div>}
 
       {report && (
-        <div style={{ marginTop: "20px" }}>
-          <h3>Student Report</h3>
-          <div style={{ marginBottom: "20px" }}>
+        <div className="report-output">
+          <div className="report-actions">
+            <button type="button" className="print-btn" onClick={handlePrint}>
+              Print Report
+            </button>
+          </div>
+
+          <div className="report-header">
+            <h3>Academic Performance Report</h3>
+            <p className="report-date">
+              Generated: {new Date(report.generatedAt).toLocaleString()}
+            </p>
+          </div>
+
+          <div className="student-info-card">
             <h4>Student Information</h4>
-            <p><strong>Name:</strong> {report.student.name}</p>
-            <p><strong>Email:</strong> {report.student.email}</p>
+            <div className="student-info-grid">
+              <p><strong>Name:</strong> {report.student.name}</p>
+              <p><strong>Email:</strong> {report.student.email}</p>
+              <p><strong>Student ID:</strong> {report.student.studentId || "—"}</p>
+              <p><strong>Degree:</strong> {report.student.degree || "—"}</p>
+              <p><strong>Batch:</strong> {report.student.batch || "—"}</p>
+            </div>
           </div>
 
-          <div style={{ marginBottom: "20px" }}>
-            <h4>Progress Summary</h4>
-            <p><strong>Total Courses:</strong> {report.progress.totalCourses}</p>
-            <p><strong>Completed Courses:</strong> {report.progress.completedCourses}</p>
-            <p><strong>In Progress Courses:</strong> {report.progress.inProgressCourses}</p>
-            <p><strong>Dropped Courses:</strong> {report.progress.droppedCourses}</p>
-            <p><strong>Average Grade:</strong> {report.progress.averageGrade}</p>
+          <div className="report-summary-grid">
+            <div className="summary-stat">
+              <span className="stat-value">{report.summary.totalCourses}</span>
+              <span className="stat-label">Total Subjects</span>
+            </div>
+            <div className="summary-stat">
+              <span className="stat-value">{report.summary.completedCourses}</span>
+              <span className="stat-label">Completed</span>
+            </div>
+            <div className="summary-stat">
+              <span className="stat-value">{report.summary.inProgressCourses}</span>
+              <span className="stat-label">In Progress</span>
+            </div>
+            <div className="summary-stat">
+              <span className="stat-value">{report.summary.averageGrade}</span>
+              <span className="stat-label">Avg GPA</span>
+            </div>
+            <div className="summary-stat">
+              <span className="stat-value">{report.summary.gradedQuizzes}/{report.summary.totalQuizzes}</span>
+              <span className="stat-label">Quizzes Graded</span>
+            </div>
+            <div className="summary-stat">
+              <span className="stat-value">{report.summary.submittedAssignments}</span>
+              <span className="stat-label">Assignments Submitted</span>
+            </div>
           </div>
 
-          <div style={{ marginBottom: "20px" }}>
-            <h4>Course Details</h4>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead>
-                <tr>
-                  <th style={{ border: "1px solid #ddd", padding: "8px" }}>Course Code</th>
-                  <th style={{ border: "1px solid #ddd", padding: "8px" }}>Course Title</th>
-                  <th style={{ border: "1px solid #ddd", padding: "8px" }}>Assignments</th>
-                  <th style={{ border: "1px solid #ddd", padding: "8px" }}>Quizzes</th>
-                  <th style={{ border: "1px solid #ddd", padding: "8px" }}>Midterm</th>
-                  <th style={{ border: "1px solid #ddd", padding: "8px" }}>Final</th>
-                  <th style={{ border: "1px solid #ddd", padding: "8px" }}>Grade</th>
-                  <th style={{ border: "1px solid #ddd", padding: "8px" }}>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {report.progress.courses.map((course, index) => (
-                  <tr key={index}>
-                    <td style={{ border: "1px solid #ddd", padding: "8px" }}>{course.courseCode}</td>
-                    <td style={{ border: "1px solid #ddd", padding: "8px" }}>{course.courseTitle}</td>
-                    <td style={{ border: "1px solid #ddd", padding: "8px" }}>{course.assignments}</td>
-                    <td style={{ border: "1px solid #ddd", padding: "8px" }}>{course.quizzes}</td>
-                    <td style={{ border: "1px solid #ddd", padding: "8px" }}>{course.midterm}</td>
-                    <td style={{ border: "1px solid #ddd", padding: "8px" }}>{course.final}</td>
-                    <td style={{ border: "1px solid #ddd", padding: "8px" }}>{course.overallGrade}</td>
-                    <td style={{ border: "1px solid #ddd", padding: "8px" }}>{course.status}</td>
+          <h4 className="detail-section-title">Scores Overview by Subject</h4>
+          {report.subjects.length === 0 ? (
+            <p className="empty-msg">No subjects enrolled.</p>
+          ) : (
+            <div className="detail-table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Subject Code</th>
+                    <th>Subject Title</th>
+                    <th>Assignments</th>
+                    <th>Quizzes</th>
+                    <th>Midterm</th>
+                    <th>Final</th>
+                    <th>Overall Grade</th>
+                    <th>Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {report.subjects.map((subject) => (
+                    <tr key={subject.courseCode}>
+                      <td>{subject.courseCode}</td>
+                      <td>{subject.courseTitle}</td>
+                      <td>{formatGrade(subject.scores.assignments)}</td>
+                      <td>{formatGrade(subject.scores.quizzes)}</td>
+                      <td>{formatGrade(subject.scores.midterm)}</td>
+                      <td>{formatGrade(subject.scores.final)}</td>
+                      <td>{subject.scores.overallGrade || "—"}</td>
+                      <td>{subject.scores.status}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
 
-          <div style={{ marginBottom: "20px" }}>
-            <h4>Assignment Summary</h4>
-            <p><strong>Total Assignments:</strong> {report.assignments.total}</p>
-            <p><strong>Submitted:</strong> {report.assignments.submitted}</p>
-            <p><strong>Pending:</strong> {report.assignments.pending}</p>
-          </div>
+          {report.subjects.map((subject) => (
+            <div key={subject.courseCode} className="subject-report-block">
+              <h4 className="subject-report-title">
+                {subject.courseCode} — {subject.courseTitle}
+              </h4>
+              <p className="subject-report-meta">
+                {subject.semester} · {subject.year} · Overall: {subject.scores.overallGrade || "—"}
+              </p>
 
-          <p><small>Report generated at: {new Date(report.generatedAt).toLocaleString()}</small></p>
+              <h5 className="subject-subheading">Quizzes</h5>
+              {subject.quizzes.length === 0 ? (
+                <p className="empty-msg">No quiz submissions for this subject.</p>
+              ) : (
+                <div className="detail-table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Quiz</th>
+                        <th>Score</th>
+                        <th>Percentage</th>
+                        <th>Status</th>
+                        <th>Submitted</th>
+                        <th>Remarks</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {subject.quizzes.map((quiz) => (
+                        <tr key={quiz.id}>
+                          <td>{quiz.title}</td>
+                          <td>{formatScore(quiz.score, quiz.totalMarks)}</td>
+                          <td>
+                            {quiz.scorePercent != null ? (
+                              <span className={quiz.scorePercent < 70 ? "score-low" : "score-ok"}>
+                                {quiz.scorePercent}%
+                              </span>
+                            ) : (
+                              "—"
+                            )}
+                          </td>
+                          <td>{quiz.status}</td>
+                          <td>{formatDate(quiz.submittedAt)}</td>
+                          <td>{quiz.remarks || "—"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              <h5 className="subject-subheading">Assignments</h5>
+              {subject.assignments.length === 0 ? (
+                <p className="empty-msg">No assignments for this subject.</p>
+              ) : (
+                <div className="detail-table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Assignment</th>
+                        <th>Due Date</th>
+                        <th>Status</th>
+                        <th>Score</th>
+                        <th>Submitted</th>
+                        <th>Remarks</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {subject.assignments.map((a) => (
+                        <tr key={a.id}>
+                          <td>{a.title || a.assignmentNumber}</td>
+                          <td>{formatDate(a.dueDate)}</td>
+                          <td>{a.status}</td>
+                          <td>{formatScore(a.score, a.totalMarks)}</td>
+                          <td>{formatDate(a.submittedDate)}</td>
+                          <td>{a.remarks || "—"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {subject.recommendations.length > 0 && (
+                <>
+                  <h5 className="subject-subheading">AI Learning Recommendations</h5>
+                  <div className="detail-table-wrap">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Quiz</th>
+                          <th>Score</th>
+                          <th>Topic</th>
+                          <th>Description</th>
+                          <th>Source</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {subject.recommendations.flatMap((rec) =>
+                          rec.topics.map((topic, i) => (
+                            <tr key={`${rec._id}-${i}`}>
+                              {i === 0 ? (
+                                <>
+                                  <td rowSpan={rec.topics.length}>{rec.quizTitle}</td>
+                                  <td rowSpan={rec.topics.length}>
+                                    <span className="score-low">{rec.scorePercent}%</span>
+                                  </td>
+                                </>
+                              ) : null}
+                              <td><strong>{topic.title}</strong></td>
+                              <td>{topic.description || "—"}</td>
+                              <td>
+                                {topic.sourceUrl ? (
+                                  <a
+                                    href={topic.sourceUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="resource-link"
+                                  >
+                                    {topic.sourceName || "View"}
+                                  </a>
+                                ) : (
+                                  "—"
+                                )}
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
+            </div>
+          ))}
         </div>
       )}
     </div>
