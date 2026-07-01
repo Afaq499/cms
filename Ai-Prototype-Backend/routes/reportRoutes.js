@@ -4,7 +4,12 @@ const Progress = require("../models/Progress");
 const Assignment = require("../models/Assignment");
 const User = require("../models/User");
 const Quiz = require("../models/Quiz");
+const QuizSubmission = require("../models/QuizSubmission");
 const { syncStudentProgress } = require("../utils/progressCalculator");
+const {
+  getStudentRecommendations,
+  backfillMissingRecommendations,
+} = require("../utils/learningRecommendationService");
 
 // Generate comprehensive student report
 router.get("/student/:studentId", async (req, res) => {
@@ -119,6 +124,9 @@ router.get("/all-students", async (req, res) => {
         id: student._id,
         name: student.name,
         email: student.email,
+        studentId: student.studentId || null,
+        degree: student.degree || null,
+        batch: student.batch || null,
         totalCourses,
         completedCourses,
         progress: progressPercentage,
@@ -126,6 +134,100 @@ router.get("/all-students", async (req, res) => {
     });
 
     res.json(studentsSummary);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Detailed student view for teacher (courses, quizzes, assignments, AI recommendations)
+router.get("/student-detail/:studentId", async (req, res) => {
+  try {
+    const { studentId } = req.params;
+
+    const student = await User.findOne({ _id: studentId, role: "Student" }).select("-password");
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    const courses = await syncStudentProgress(studentId);
+    const courseCodes = courses.map((c) => c.courseCode);
+
+    await backfillMissingRecommendations(studentId);
+    const recommendations = await getStudentRecommendations(studentId);
+
+    const assignments = courseCodes.length
+      ? await Assignment.find({
+          courseCode: { $in: courseCodes },
+          $or: [{ studentId }, { studentId: null }],
+        }).sort({ dueDate: -1 })
+      : [];
+
+    const quizSubmissions = await QuizSubmission.find({ studentId })
+      .populate("quizId")
+      .sort({ submittedAt: -1 });
+
+    const quizzes = quizSubmissions.map((sub) => {
+      const quiz = sub.quizId;
+      const scorePercent =
+        sub.score != null && sub.totalMarks
+          ? Math.round((sub.score / sub.totalMarks) * 100)
+          : null;
+      return {
+        id: sub._id,
+        quizId: quiz?._id || sub.quizId,
+        title: quiz?.title || "Unknown Quiz",
+        courseCode: quiz?.courseCode || "—",
+        courseName: quiz?.courseName || "—",
+        score: sub.score,
+        totalMarks: sub.totalMarks,
+        scorePercent,
+        status: sub.status,
+        submittedAt: sub.submittedAt,
+        gradedAt: sub.gradedAt,
+        remarks: sub.remarks,
+      };
+    });
+
+    res.json({
+      student: {
+        id: student._id,
+        name: student.name,
+        email: student.email,
+        studentId: student.studentId || null,
+        degree: student.degree || null,
+        batch: student.batch || null,
+        contact: student.contact || null,
+      },
+      courses: courses.map((c) => ({
+        courseCode: c.courseCode,
+        courseTitle: c.courseTitle,
+        assignments: c.assignments ?? null,
+        quizzes: c.quizzes ?? null,
+        midterm: c.midterm ?? null,
+        final: c.final ?? null,
+        overallGrade: c.overallGrade,
+        status: c.status,
+        semester: c.semester,
+        year: c.year,
+      })),
+      assignments: assignments.map((a) => ({
+        id: a._id,
+        title: a.title,
+        assignmentNumber: a.assignmentNumber,
+        courseCode: a.courseCode,
+        courseName: a.courseName,
+        dueDate: a.dueDate,
+        status: a.status,
+        score: a.score,
+        totalMarks: a.totalMarks,
+        submittedDate: a.submittedDate,
+        remarks: a.remarks,
+        isStudentSubmission:
+          a.studentId && a.studentId.toString() === studentId.toString(),
+      })),
+      quizzes,
+      recommendations,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
