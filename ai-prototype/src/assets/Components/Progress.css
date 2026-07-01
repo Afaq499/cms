@@ -89,3 +89,80 @@
   padding: 4px 8px;
   border-radius: 4px;
 }
+
+.recommendationsSection {
+  margin-top: 24px;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+}
+
+.recommendationsTableWrap {
+  margin-top: 0;
+  padding: 0;
+  box-shadow: none;
+}
+
+.recommendationsSubtitle {
+  font-size: 14px;
+  color: #666;
+  margin: 0 0 16px;
+}
+
+.noRecommendations {
+  color: #777;
+  font-size: 14px;
+  font-style: italic;
+}
+
+.recommendationsTable td {
+  text-align: left;
+  vertical-align: top;
+}
+
+.recommendationsTable th:nth-child(5),
+.recommendationsTable th:nth-child(6),
+.recommendationsTable th:nth-child(7) {
+  text-align: left;
+}
+
+.cellSubtext {
+  font-size: 12px;
+  color: #777;
+}
+
+.topicCell {
+  font-weight: 600;
+  color: #2c3e50;
+  min-width: 140px;
+}
+
+.descCell {
+  color: #555;
+  font-size: 13px;
+  line-height: 1.4;
+  max-width: 280px;
+}
+
+.scoreBadge {
+  display: inline-block;
+  background: #fff3cd;
+  color: #856404;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.topicLink {
+  font-size: 13px;
+  color: #0073e6;
+  text-decoration: none;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.topicLink:hover {
+  text-decoration: underline;
+}

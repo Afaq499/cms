@@ -1,6 +1,5 @@
 const express = require("express");
 const router = express.Router();
-const { GoogleGenerativeAI } = require("@google/generative-ai");
 const Progress = require("../models/Progress");
 const User = require("../models/User");
 const Degree = require("../models/Degree");
@@ -9,47 +8,7 @@ const Quiz = require("../models/Quiz");
 const LectureVideo = require("../models/LectureVideo");
 const Gdb = require("../models/Gdb");
 const { syncStudentProgress } = require("../utils/progressCalculator");
-
-// Gemini API Configuration
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "";
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
-const GEMINI_FALLBACK_MODELS = (process.env.GEMINI_FALLBACK_MODELS || "gemini-2.5-flash-lite,gemini-1.5-flash")
-  .split(",")
-  .map((m) => m.trim())
-  .filter(Boolean);
-
-const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-
-async function generateChatResponse(prompt) {
-  const modelsToTry = [GEMINI_MODEL, ...GEMINI_FALLBACK_MODELS.filter((m) => m !== GEMINI_MODEL)];
-  let lastError;
-
-  for (const modelName of modelsToTry) {
-    try {
-      const model = genAI.getGenerativeModel({ model: modelName });
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      return {
-        text: response.text() || "Sorry, I couldn't understand that. Please try rephrasing your question.",
-        model: modelName,
-      };
-    } catch (error) {
-      lastError = error;
-      const isQuotaError = error.status === 429 || (error.message || "").includes("429");
-      const isModelUnavailable =
-        (error.message || "").includes("404") ||
-        (error.message || "").includes("not found");
-
-      if (isQuotaError || isModelUnavailable) {
-        console.warn(`Gemini model "${modelName}" unavailable, trying next...`);
-        continue;
-      }
-      throw error;
-    }
-  }
-
-  throw lastError;
-}
+const { generateChatResponse, isGeminiConfigured } = require("../utils/geminiClient");
 
 function getGeminiErrorResponse(error) {
   const message = error.message || "";
@@ -355,7 +314,7 @@ router.post("/message", async (req, res) => {
       });
     }
 
-    if (!GEMINI_API_KEY || GEMINI_API_KEY === "") {
+    if (!isGeminiConfigured()) {
       return res.status(500).json({ 
         error: "Gemini API key is not configured. Please set GEMINI_API_KEY or GOOGLE_API_KEY in environment variables." 
       });
@@ -372,7 +331,7 @@ router.post("/message", async (req, res) => {
     const { text: botMessage } = await generateChatResponse(fullPrompt);
 
     res.json({ 
-      message: botMessage,
+      message: botMessage || "Sorry, I couldn't understand that. Please try rephrasing your question.",
       success: true 
     });
   } catch (error) {

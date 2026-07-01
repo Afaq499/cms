@@ -5,6 +5,18 @@ const QuizSubmission = require("../models/QuizSubmission");
 const Assignment = require("../models/Assignment");
 const User = require("../models/User");
 const { syncProgressForCourse } = require("../utils/progressCalculator");
+const {
+  analyzeQuizSubmission,
+  createRecommendationIfNeeded,
+} = require("../utils/learningRecommendationService");
+
+async function afterQuizGraded(submission, quiz) {
+  if (quiz?.courseCode && submission.studentId) {
+    const studentId = submission.studentId._id || submission.studentId;
+    await syncProgressForCourse(studentId, quiz.courseCode);
+  }
+  await createRecommendationIfNeeded(submission, quiz);
+}
 
 // GET all quizzes
 router.get("/", async (req, res) => {
@@ -163,10 +175,29 @@ router.post("/:id/submit", async (req, res) => {
     }
 
     submission.answers = answers;
-    submission.status = "Submitted";
     submission.submittedAt = new Date();
 
+    const quiz = await Quiz.findById(id);
+    if (!quiz) {
+      return res.status(404).json({ message: "Quiz not found" });
+    }
+
+    const { score, hasManualQuestions } = analyzeQuizSubmission(quiz, submission);
+
+    if (!hasManualQuestions) {
+      submission.score = score;
+      submission.status = "Graded";
+      submission.gradedAt = new Date();
+    } else {
+      submission.status = "Submitted";
+    }
+
     await submission.save();
+
+    if (submission.status === "Graded") {
+      await afterQuizGraded(submission, quiz);
+    }
+
     res.json(submission);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -211,9 +242,7 @@ router.post("/:id/grade/:submissionId", async (req, res) => {
     await submission.populate("quizId");
 
     const quiz = submission.quizId;
-    if (quiz && quiz.courseCode && submission.studentId) {
-      await syncProgressForCourse(submission.studentId._id || submission.studentId, quiz.courseCode);
-    }
+    await afterQuizGraded(submission, quiz);
 
     res.json(submission);
   } catch (error) {

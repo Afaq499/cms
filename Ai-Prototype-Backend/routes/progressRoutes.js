@@ -3,6 +3,10 @@ const router = express.Router();
 const Progress = require("../models/Progress");
 const User = require("../models/User");
 const { syncStudentProgress } = require("../utils/progressCalculator");
+const {
+  getStudentRecommendations,
+  backfillMissingRecommendations,
+} = require("../utils/learningRecommendationService");
 
 function formatProgressRecord(record) {
   const data = record.toObject ? record.toObject() : record;
@@ -38,6 +42,8 @@ router.get("/student/:studentId", async (req, res) => {
     }
 
     const progress = await syncStudentProgress(studentId);
+    await backfillMissingRecommendations(studentId);
+    const recommendations = await getStudentRecommendations(studentId);
 
     res.json({
       student: {
@@ -49,6 +55,7 @@ router.get("/student/:studentId", async (req, res) => {
         studentId: student.studentId || null,
       },
       courses: progress.map(formatProgressRecord),
+      recommendations,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
