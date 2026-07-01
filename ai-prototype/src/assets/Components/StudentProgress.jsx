@@ -307,8 +307,6 @@ export function StudentProgress() {
               <th>Degree</th>
               <th>Batch</th>
               <th>Total Courses</th>
-              <th>Completed</th>
-              <th>Progress (%)</th>
             </tr>
           </thead>
           <tbody>
@@ -324,8 +322,6 @@ export function StudentProgress() {
                 <td>{student.degree || "—"}</td>
                 <td>{student.batch || "—"}</td>
                 <td>{student.totalCourses}</td>
-                <td>{student.completedCourses}</td>
-                <td>{student.progress}%</td>
               </tr>
             ))}
           </tbody>

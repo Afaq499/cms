@@ -8,4 +8,5 @@
 /Ai-Prototype-Backend/build
 /Ai-Prototype-Backend/public
 /Ai-Prototype-Backend/README.md
-.env
+config.bat
+node_modules
